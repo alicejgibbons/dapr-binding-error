@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-binding
+spec:
+  type: bindings.kafka
+  version: v1
+  metadata:
+  - name: brokers # Required.
+    value: "localhost:9092"
+  - name: publishTopic # Optional. Used for output bindings.
+    value: "topic1"
+  - name: authType 
+    value: "none"
+  - name: direction
+    value: "output"
