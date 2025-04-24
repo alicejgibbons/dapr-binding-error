@@ -1,33 +1,44 @@
-# Dapr Bindings (Dapr SDK)
+# Dapr Bindings HTTP Binding Error Repro
 
-In this quickstart, you'll create a microservice to demonstrate Dapr's bindings API to work with external systems as inputs and outputs. The service listens to input binding events from a system CRON and then outputs the contents of local data to a PostreSql output binding. 
+On REST client when you run the dapr sidecar (only) and then hit the following endpoint with the respective body, you get a status code 400 with an Error code in the response.
 
-Visit [this](https://docs.dapr.io/developing-applications/building-blocks/bindings/) link for more information about Dapr and Bindings.
+![http error](java/sdk/http-error.png)
 
-> **Note:** This example leverages the Dapr SDK.  If you are looking for the example using HTTP REST only [click here](../http).
+Endpoint: `http://localhost:3500/v1.0/bindings/http`
+Body:
 
-This quickstart includes one service:
- 
-- Java service `batch`
-
-### Run and initialize PostgreSQL container
-
-1. Open a new terminal, change directories to `../../db`, and run the container with [Docker Compose](https://docs.docker.com/compose/): 
-
-<!-- STEP
-name: Run and initialize PostgreSQL container
-expected_return_code:
-background: true
-sleep: 60
-timeout_seconds: 120
--->
-
-```bash
-cd ../../db
-docker compose up
+```
+{
+  "operation": "post",
+  "data": "content (default is JSON)",
+  "metadata": {
+    "path": "/things",
+    "Content-Type": "application/json; charset=utf-8"
+  }
+}
 ```
 
-<!-- END_STEP -->
+Response: 
+```
+{
+    "errorCode": "ERR_INVOKE_OUTPUT_BINDING",
+    "message": "error invoking output binding http: received status code 400"
+}
+```
+
+Then by running the sample app (steps below), you can see that the output of the application doesn't contain the 400 response status code from the response when inspecting the DaprException object:
+
+```
+== APP == 2025-04-24T20:19:32.010+01:00  INFO 67463 --- [nio-8080-exec-3] c.s.c.BatchProcessingServiceController   : Processing batch..
+== APP == Dapr exception's error code: (DaprException.getErrorCode()): INTERNAL
+== APP == Dapr exception's message: (DaprError.getMessage()) INTERNAL: error invoking output binding http: received status code 400
+== APP == Dapr exception's error details (DaprException.getErrorDetails())): ERR_INVOKE_OUTPUT_BINDING
+== APP == Dapr exception's getHttpStatusCode: (DaprException.getHttpStatusCode()): 0
+== APP == Error's payload: (DaprException.getPayload()): [B@df87a64
+== APP == Error's payload size: (DaprException.getPayload().length): 146
+```
+
+Specifically this line "== APP == Dapr exception's getHttpStatusCode: (DaprException.getHttpStatusCode()): 0"
 
 ### Run Java service with Dapr
 
@@ -38,7 +49,7 @@ name: Install Java dependencies
 -->
 
 ```bash
-cd ./batch
+cd bindings/java/sdk/batch/ 
 mvn clean install
 ```
 
